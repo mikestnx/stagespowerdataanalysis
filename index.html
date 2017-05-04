@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<svg width="960" height="500"></svg>
+<script src="/d3/d3.min.js"></script>
+<script>
+
+var svg = d3.select("svg"),
+    margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = +svg.attr("width") - margin.left - margin.right,
+    height = +svg.attr("height") - margin.top - margin.bottom,
+    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var parseTime = d3.timeParse("%d-%b-%y");
+
+var x = d3.scaleTime()
+    .rangeRound([0, width]);
+
+var nm_y = d3.scaleLinear()
+    .rangeRound([height, 0]),
+    force_y = d3.scaleLinear()
+    .rangeRound([height, 0]);
+
+var nm_line = d3.line()
+    .x(function(d) { return x(d.Timestamp); })
+    .y(function(d) { return nm_y(d.nm); });
+
+var force_line = d3.line()
+    .x(function(d) { return x(d.Timestamp); })
+    .y(function(d) { return force_y(d.kgf); });
+
+d3.csv("stages_data_1.csv", function(d) {
+  d.Timestamp = +d.Timestamp;
+  d.kgf = +d[" kgf"].trim();
+  d.nm = +d[" Nm"].trim();
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  x.domain(d3.extent(data, function(d) { return d.Timestamp; }));
+  nm_y.domain(d3.extent(data, function(d) { return d.nm; }));
+  force_y.domain(d3.extent(data, function(d) { return d.kgf; }));
+
+  g.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  g.append("g")
+      .call(d3.axisLeft(nm_y))
+    .append("text")
+      .attr("fill", "#000")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .attr("text-anchor", "end")
+      .text("Torque (Nm)");
+
+  g.append("path")
+      .datum(data)
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("stroke-linejoin", "round")
+      .attr("stroke-linecap", "round")
+      .attr("stroke-width", 1.5)
+      .attr("d", nm_line);
+
+  g.append("path")
+      .datum(data)
+      .attr("fill", "none")
+      .attr("stroke", "green")
+      .attr("stroke-linejoin", "round")
+      .attr("stroke-linecap", "round")
+      .attr("stroke-width", 1.5)
+      .attr("d", force_line);
+});
+
+</script>
